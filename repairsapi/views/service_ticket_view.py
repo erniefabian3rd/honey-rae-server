@@ -25,6 +25,13 @@ class TicketView(ViewSet):
             if "status" in request.query_params:
                 if request.query_params['status'] == "done":
                     service_tickets = service_tickets.filter(date_completed__isnull=False)
+                elif request.query_params['status'] == "unclaimed":
+                    service_tickets = service_tickets.filter(employee_id__isnull=True)
+                elif request.query_params['status'] == "inprogress":
+                    service_tickets = service_tickets.filter(date_completed__isnull=True, employee_id__isnull=False)
+            elif "description" in request.query_params:
+                search_term = request.query_params['description']
+                service_tickets = service_tickets.filter(description__contains=search_term)
 
         else:
             service_tickets = ServiceTicket.objects.filter(customer__user=request.auth.user)
@@ -71,6 +78,7 @@ class TicketView(ViewSet):
 
         #Get the employee id from the client request
         employee_id = request.data['employee']
+        ticket.date_completed = request.data['date_completed']
 
         #Select the employee from the database using that id
         assigned_employee = Employee.objects.get(pk=employee_id)
